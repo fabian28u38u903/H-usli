@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Onboarding AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <a href="{{ url_for('new_customer') }}" class="btn btn-primary">+ Neuer Kunde</a>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="number">{{ customers|length }}</div>
+    <div class="label">Kunden gesamt</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">
+      {{ customers|selectattr('latest_analysis')|selectattr('latest_analysis.status', 'eq', 'done')|list|length }}
+    </div>
+    <div class="label">Reports fertig</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">
+      {{ customers|selectattr('latest_analysis')|selectattr('latest_analysis.status', 'eq', 'running')|list|length }}
+    </div>
+    <div class="label">Analysen laufend</div>
+  </div>
+</div>
+
+<!-- Kunden-Tabelle -->
+<div class="card">
+  <h2>Alle Kunden</h2>
+  {% if customers %}
+  <table>
+    <thead>
+      <tr>
+        <th>Kunde</th>
+        <th>Nische</th>
+        <th>E-Mail</th>
+        <th>Status</th>
+        <th>Aktionen</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in customers %}
+      <tr>
+        <td><strong>{{ c.name }}</strong></td>
+        <td>{{ c.niche }}</td>
+        <td>{{ c.contact_email or '–' }}</td>
+        <td>
+          {% if c.latest_analysis %}
+            {% set s = c.latest_analysis.status %}
+            <span class="badge badge-{{ s }}">
+              {% if s == 'running' %}<span class="spinner"></span> {% endif %}
+              {{ {'pending': 'Ausstehend', 'running': 'Läuft...', 'done': 'Fertig', 'error': 'Fehler'}[s] }}
+            </span>
+          {% else %}
+            <span class="badge badge-pending">Keine Analyse</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="actions">
+            <a href="{{ url_for('customer_detail', customer_id=c.id) }}" class="btn btn-outline btn-sm">Details</a>
+            <form method="POST" action="{{ url_for('start_analysis', customer_id=c.id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-primary btn-sm">Analyse starten</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:#999; text-align:center; padding: 30px 0;">
+    Noch keine Kunden angelegt.
+    <a href="{{ url_for('new_customer') }}">Ersten Kunden anlegen →</a>
+  </p>
+  {% endif %}
+</div>
+
+<script>
+  // Auto-Reload falls Analysen laufen
+  const hasRunning = document.querySelector('.badge-running');
+  if (hasRunning) {
+    setTimeout(() => location.reload(), 8000);
+  }
+</script>
+{% endblock %}

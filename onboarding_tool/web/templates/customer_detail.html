@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }} – Onboarding AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>{{ customer.name }}</h1>
+  <div class="actions">
+    <a href="{{ url_for('edit_customer', customer_id=customer.id) }}" class="btn btn-outline">Bearbeiten</a>
+    <form method="POST" action="{{ url_for('start_analysis', customer_id=customer.id) }}" style="display:inline;">
+      <button type="submit" class="btn btn-primary">▶ Analyse starten</button>
+    </form>
+  </div>
+</div>
+
+<!-- Kundendaten -->
+<div class="card">
+  <h2>Kundendaten</h2>
+  <table>
+    <tr><th style="width:180px;">Nische</th><td>{{ customer.niche }}</td></tr>
+    <tr><th>Dienstleistung</th><td>{{ customer.service }}</td></tr>
+    <tr><th>Zielgruppe</th><td>{{ customer.target_audience or '–' }}</td></tr>
+    <tr><th>Kontakt</th><td>{{ customer.contact_name or '–' }} · {{ customer.contact_email or 'keine E-Mail' }}</td></tr>
+    <tr>
+      <th>Benefits</th>
+      <td>
+        {% if customer.benefits %}
+          <ul style="margin:0; padding-left:18px;">
+            {% for b in customer.benefits %}<li>{{ b }}</li>{% endfor %}
+          </ul>
+        {% else %}–{% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>Keywords DE</th>
+      <td>{{ customer.keywords_de|join(', ') or '–' }}</td>
+    </tr>
+    <tr>
+      <th>Keywords EN</th>
+      <td>{{ customer.keywords_en|join(', ') or '–' }}</td>
+    </tr>
+  </table>
+</div>
+
+<!-- Analysen -->
+<div class="card">
+  <h2>Analysen & Reports</h2>
+
+  {% if analyses %}
+  <table>
+    <thead>
+      <tr>
+        <th>Gestartet</th>
+        <th>Abgeschlossen</th>
+        <th>Status</th>
+        <th>Aktionen</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in analyses %}
+      <tr id="analysis-{{ a.id }}">
+        <td>{{ a.started_at[:16].replace('T', ' ') if a.started_at else a.created_at[:16].replace('T', ' ') }}</td>
+        <td>{{ a.finished_at[:16].replace('T', ' ') if a.finished_at else '–' }}</td>
+        <td>
+          <span class="badge badge-{{ a.status }}" id="status-{{ a.id }}">
+            {% if a.status == 'running' %}<span class="spinner"></span> {% endif %}
+            {{ {'pending': 'Ausstehend', 'running': 'Läuft...', 'done': 'Fertig', 'error': 'Fehler'}[a.status] }}
+          </span>
+          {% if a.error_message %}
+            <br><small style="color:#E74C3C;">{{ a.error_message[:80] }}</small>
+          {% endif %}
+        </td>
+        <td>
+          <div class="actions">
+            {% if a.status == 'done' and a.report_path %}
+              <a href="{{ url_for('download_report', analysis_id=a.id) }}"
+                 class="btn btn-success btn-sm">📄 PDF herunterladen</a>
+
+              <!-- E-Mail senden -->
+              <form method="POST" action="{{ url_for('send_email_route', analysis_id=a.id) }}"
+                    style="display:inline;" onsubmit="return confirmEmail(this)">
+                <input type="hidden" name="email" id="email-input-{{ a.id }}"
+                       value="{{ customer.contact_email or '' }}">
+                <button type="submit" class="btn btn-dark btn-sm">✉ E-Mail senden</button>
+              </form>
+            {% elif a.status == 'running' %}
+              <span style="color:#D68910; font-size:13px;">Analyse läuft...</span>
+            {% elif a.status == 'error' %}
+              <form method="POST" action="{{ url_for('start_analysis', customer_id=customer.id) }}"
+                    style="display:inline;">
+                <button type="submit" class="btn btn-outline btn-sm">↺ Wiederholen</button>
+              </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:#999; text-align:center; padding:20px 0;">
+    Noch keine Analyse gestartet.
+  </p>
+  {% endif %}
+</div>
+
+<!-- Löschen -->
+<div class="card" style="border-left: 4px solid #E74C3C;">
+  <h2 style="color:#E74C3C;">Gefahrenzone</h2>
+  <p style="font-size:14px; color:#777; margin-bottom:15px;">
+    Löscht den Kunden und alle zugehörigen Analysen unwiderruflich.
+  </p>
+  <form method="POST" action="{{ url_for('delete_customer_route', customer_id=customer.id) }}"
+        onsubmit="return confirm('Kunden wirklich löschen?')">
+    <button type="submit" class="btn btn-danger btn-sm">Kunde löschen</button>
+  </form>
+</div>
+
+<script>
+function confirmEmail(form) {
+  const emailInput = form.querySelector('input[name="email"]');
+  const current = emailInput.value;
+  const entered = prompt('E-Mail-Adresse:', current);
+  if (entered === null) return false;
+  emailInput.value = entered;
+  return true;
+}
+
+// Auto-Reload falls Analyse läuft
+const running = document.querySelector('.badge-running');
+if (running) {
+  setTimeout(() => location.reload(), 8000);
+}
+</script>
+{% endblock %}

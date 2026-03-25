@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Kunde bearbeiten' if customer else 'Neuer Kunde' }} – Onboarding AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>{{ 'Kunde bearbeiten' if customer else 'Neuer Kunde anlegen' }}</h1>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-outline">← Zurück</a>
+</div>
+
+<div class="card">
+  <form method="POST">
+
+    <h2 style="margin-bottom:20px;">Grunddaten</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Kundenname *</label>
+        <input type="text" name="name" required
+               value="{{ customer.name if customer else '' }}"
+               placeholder="z.B. Michel Stiftung Beratung">
+      </div>
+      <div class="form-group">
+        <label>Nische *</label>
+        <input type="text" name="niche" required
+               value="{{ customer.niche if customer else '' }}"
+               placeholder="z.B. Familienstiftung & Vermögensschutz">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Dienstleistung / Angebot *</label>
+      <input type="text" name="service" required
+             value="{{ customer.service if customer else '' }}"
+             placeholder="z.B. Beratung zur Gründung von Familienstiftungen in Deutschland">
+    </div>
+
+    <div class="form-group">
+      <label>Zielgruppe</label>
+      <input type="text" name="target_audience"
+             value="{{ customer.target_audience if customer else '' }}"
+             placeholder="z.B. Unternehmer ab 45 Jahren mit erfolgreichem Unternehmen">
+    </div>
+
+    <div class="form-group">
+      <label>Nutzenversprechen / Benefits</label>
+      <textarea name="benefits"
+                placeholder="Einen Benefit pro Zeile:&#10;Steuern sparen&#10;Lebenswerk sichern&#10;Unternehmensnachfolge regeln">{{ '\n'.join(customer.benefits) if customer else '' }}</textarea>
+      <div class="form-hint">Einen Punkt pro Zeile</div>
+    </div>
+
+    <hr class="divider">
+    <h2 style="margin-bottom:20px;">SEO Keywords</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Keywords Deutsch</label>
+        <textarea name="keywords_de"
+                  placeholder="Familienstiftung gründen&#10;Stiftung Steuern sparen&#10;Erbschaftsteuer vermeiden">{{ '\n'.join(customer.keywords_de) if customer else '' }}</textarea>
+        <div class="form-hint">Einen Begriff pro Zeile</div>
+      </div>
+      <div class="form-group">
+        <label>Keywords Englisch (für US-Markt-Analyse)</label>
+        <textarea name="keywords_en"
+                  placeholder="family foundation Germany&#10;asset protection foundation&#10;inheritance tax avoidance">{{ '\n'.join(customer.keywords_en) if customer else '' }}</textarea>
+        <div class="form-hint">Einen Begriff pro Zeile</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <h2 style="margin-bottom:20px;">Kontakt (für E-Mail-Versand)</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ansprechpartner</label>
+        <input type="text" name="contact_name"
+               value="{{ customer.contact_name if customer else '' }}"
+               placeholder="z.B. Max Mustermann">
+      </div>
+      <div class="form-group">
+        <label>E-Mail-Adresse</label>
+        <input type="email" name="contact_email"
+               value="{{ customer.contact_email if customer else '' }}"
+               placeholder="z.B. max@kunde.de">
+        <div class="form-hint">Report wird nach Analyse automatisch versendet</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-top:10px;">
+      <button type="submit" class="btn btn-primary">
+        {{ 'Änderungen speichern' if customer else 'Kunde anlegen' }}
+      </button>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Abbrechen</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
