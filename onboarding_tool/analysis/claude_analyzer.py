@@ -59,6 +59,17 @@ def _format_research_for_prompt(research: dict) -> str:
             for q in queries[:8]:
                 parts.append(f"  - {q.get('query', '')} (+{q.get('value', '')}%)")
 
+    # Reddit
+    reddit = research.get("web", {}).get("reddit", [])
+    if reddit:
+        parts.append("\n=== Reddit Diskussionen (echte Zielgruppen-Sprache) ===")
+        for item in reddit[:15]:
+            score = item.get("score", "")
+            comments = item.get("num_comments", "")
+            sub = item.get("subreddit", "")
+            meta = f" [r/{sub}, {score} Upvotes, {comments} Kommentare]" if sub else ""
+            parts.append(f"- {item.get('title', '')}{meta}: {item.get('snippet', '')[:300]}")
+
     # Web: Zielgruppen-Sprache
     audience = research.get("web", {}).get("audience_language", [])
     if audience:
